@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Salon Appointments</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f7; color: #1d1d1f; height: 100vh; height: 100dvh; display: flex; flex-direction: column; -webkit-tap-highlight-color: transparent; }
+header { background: #fff; border-bottom: 1px solid #d2d2d7; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.menu-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px 8px; display: none; color: #1d1d1f; touch-action: manipulation; }
+header h1 { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header .gear-btn { margin-left: auto; }
+.container { display: flex; flex: 1; overflow: hidden; position: relative; }
+.sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 8; }
+.sidebar { width: 300px; min-width: 300px; background: #fff; border-right: 1px solid #d2d2d7; display: flex; flex-direction: column; flex-shrink: 0; }
+.search-wrap { padding: 12px; border-bottom: 1px solid #d2d2d7; }
+.search-wrap input { width: 100%; padding: 10px 14px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; outline: none; background: #f5f5f7; }
+.search-wrap input:focus { border-color: #0071e3; background: #fff; }
+.client-count { padding: 8px 12px; font-size: 12px; color: #86868b; border-bottom: 1px solid #d2d2d7; }
+.client-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.client-item { padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 14px; min-height: 44px; display: flex; align-items: center; }
+.client-item:hover { background: #f0f0f0; }
+.client-item.active { background: #0071e3; color: #fff; }
+.client-item .appt-count { font-size: 11px; opacity: 0.6; margin-left: 8px; white-space: nowrap; }
+.client-item.active .appt-count { opacity: 0.8; }
+.client-item .name { font-weight: 500; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.detail-panel { padding: 16px; background: #fff; border-bottom: 1px solid #d2d2d7; flex-shrink: 0; }
+.detail-panel .top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.detail-panel .left { min-width: 0; flex: 1; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.detail-panel .left .client-name { font-size: 18px; font-weight: 600; word-wrap: break-word; }
+.detail-panel .left .client-info { font-size: 12px; color: #86868b; line-height: 1.6; }
+.detail-panel .left .client-info span { margin-right: 12px; white-space: nowrap; }
+.detail-panel .right { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.btn-back { background: none; border: 1px solid #d2d2d7; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; color: #86868b; margin-bottom: 8px; touch-action: manipulation; }
+.btn-back:hover { background: #f0f0f0; }
+.btn-edit { background: none; border: 1px solid #d2d2d7; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; color: #0071e3; touch-action: manipulation; white-space: nowrap; }
+.btn-edit:hover { background: #f0f0f0; }
+.btn-save { background: #0071e3; border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; color: #fff; touch-action: manipulation; white-space: nowrap; }
+.btn-save:hover { background: #0062c4; }
+.btn-cancel { background: none; border: 1px solid #d2d2d7; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; color: #86868b; touch-action: manipulation; white-space: nowrap; }
+.btn-cancel:hover { background: #f0f0f0; }
+.btn-new-appt { background: #0071e3; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:13px; color:#fff; touch-action:manipulation; white-space:nowrap; }
+.btn-new-appt:hover { background:#0062c4; }
+.edit-field { display: flex; gap: 6px; align-items: center; margin: 2px 0; }
+.edit-field label { font-size: 11px; color: #86868b; min-width: 50px; }
+.edit-field input { flex: 1; padding: 4px 8px; border: 1px solid #d2d2d7; border-radius: 4px; font-size: 13px; font-family: inherit; }
+.edit-field input:focus { border-color: #0071e3; outline: none; }
+.save-status { font-size: 11px; color: #30b94e; margin-top: 4px; }
+.save-status.error { color: #e34a2f; }
+.calendar-header { padding: 10px 16px; background: #fff; border-bottom: 1px solid #d2d2d7; flex-shrink: 0; }
+.calendar-header .nav-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.calendar-header .nav { display: flex; align-items: center; gap: 8px; }
+.calendar-header .nav button { background: none; border: 1px solid #d2d2d7; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 14px; touch-action: manipulation; min-height: 36px; }
+.calendar-header .nav button:hover { background: #f0f0f0; }
+.calendar-header .nav button:active { background: #e8e8ed; }
+.calendar-header .title { font-size: 14px; font-weight: 600; }
+.calendar-header .controls-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; position: relative; }
+.date-picker-label { display: inline-flex; align-items: center; position: relative; cursor: pointer; }
+.date-picker-label .dp-text { pointer-events: none; padding: 6px 14px; border: 1px solid #d2d2d7; border-radius: 6px; background: #fff; font-size: 13px; white-space: nowrap; user-select: none; }
+.date-picker-label .dp-text.icon-only { padding: 6px 10px; font-size: 16px; line-height: 1; }
+.date-picker-label input[type="date"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.01; cursor: pointer; font-size: 16px; border: none; background: transparent; color: transparent; }
+.view-toggle { display: flex; gap: 4px; }
+.view-toggle button { padding: 6px 14px; border: 1px solid #d2d2d7; background: #fff; cursor: pointer; font-size: 13px; touch-action: manipulation; }
+.view-toggle button:first-child { border-radius: 6px 0 0 6px; }
+.view-toggle button:last-child { border-radius: 0 6px 6px 0; }
+.view-toggle button.active { background: #0071e3; color: #fff; border-color: #0071e3; }
+.stylist-filter { padding:5px 10px;border:1px solid #d2d2d7;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;cursor:pointer; }
+.stylist-filter:focus { outline:none;border-color:#0071e3; }
+.btn-group { display:inline-flex; }
+.btn-group button, .btn-group .date-picker-label .dp-text { border:1px solid #d2d2d7; background:#fff; font-size:13px; cursor:pointer; padding:8px 12px; touch-action:manipulation; }
+.btn-group button { border-radius:6px 0 0 6px; border-right:none; background:none; font-family:inherit; }
+.btn-group button:hover { background:#f0f0f0; }
+.btn-group .date-picker-label .dp-text.icon-only { border-radius:0 6px 6px 0; font-size:16px; line-height:1; padding:8px 10px; }
+.btn-group .date-picker-label .dp-text.icon-only:hover { background:#f0f0f0; }
+.calendar-body { flex: 1; overflow-y: auto; padding: 12px 16px; background: #fff; margin: 0; -webkit-overflow-scrolling: touch; }
+.empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #86868b; font-size: 14px; flex-direction: column; gap: 8px; }
+.empty-state .big { font-size: 40px; opacity: 0.3; }
+/* Day timeline */
+.day-tl { display: flex; position: relative; height: 600px; overflow-y: auto; }
+.tl-hours { width: 55px; flex-shrink: 0; position: relative; }
+.tl-h { height: 50px; font-size: 10px; color: #86868b; padding: 2px 4px 0 0; text-align: right; }
+.tl-grid { flex: 1; position: relative; border-left: 1px solid #e8e8ed; }
+.tl-line { height: 50px; border-bottom: 1px solid #f0f0f0; }
+.tl-empty { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #86868b; font-size: 13px; }
+.tl-appt { position: absolute; border-radius: 4px; padding: 2px 4px; overflow: hidden; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); min-height: 18px; box-sizing: border-box; }
+.tl-appt:hover { opacity: 0.9; }
+.tl-appt-row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-appt-time { font-size: 10px; font-weight: 600; color: rgba(0,0,0,0.7); }
+.tl-appt-client { font-size: 10px; color: #000; }
+.tl-appt-svc { font-size: 10px; color: rgba(0,0,0,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Week timeline */
+.week-tl { min-width: 700px; }
+.wtl-header { display: flex; border-bottom: 1px solid #d2d2d7; background: #fafafa; position: sticky; top: 0; z-index: 2; }
+.wtl-h-spacer { width: 45px; flex-shrink: 0; }
+.wtl-h-cell { flex: 1; text-align: center; padding: 6px 2px; font-size: 11px; font-weight: 600; }
+.wtl-h-cell.today { background: #0071e3; color: #fff; }
+.wtl-body { display: flex; height: 480px; overflow-y: auto; }
+.wtl-hours-col { width: 45px; flex-shrink: 0; }
+.wtl-hour { height: 40px; font-size: 9px; color: #86868b; padding: 2px 4px 0 0; text-align: right; line-height: 40px; border-bottom: 1px solid #f0f0f0; }
+.wtl-day-col { flex: 1; position: relative; border-right: 1px solid #f0f0f0; }
+.wtl-day-col.today { background: rgba(0,113,227,0.03); }
+.wtl-appt { position: absolute; border-radius: 2px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); min-height: 3px; box-sizing: border-box; z-index: 1; }
+.wtl-appt:hover { opacity: 0.8; }
+.tl-appt.dragging, .wtl-appt.dragging { opacity: 0.35; outline: 2px dashed #333; outline-offset: -1px; cursor: grabbing; }
+.drag-tip { position: fixed; padding: 3px 8px; background: #333; color: #fff; font-size: 11px; border-radius: 4px; pointer-events: none; z-index: 999; white-space: nowrap; display: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.client-appt-list { max-width: 800px; margin: 0 auto; }
+.client-appt-list .appt-group { margin-bottom: 20px; }
+.client-appt-list .appt-group .group-date { font-size: 14px; font-weight: 600; color: #86868b; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #e8e8ed; }
+.client-appt-list .appt-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #e8e8ed; border-radius: 8px; margin-bottom: 6px; cursor: pointer; touch-action: manipulation; }
+.client-appt-list .appt-row:active { background: #f5f5f7; }
+.client-appt-list .appt-row .row-time { font-weight: 500; min-width: 80px; color: #0071e3; flex-shrink: 0; }
+.client-appt-list .appt-row .row-service { flex: 1; min-width: 0; }
+.client-appt-list .appt-row .row-service .svc { font-weight: 500; font-size: 14px; }
+.client-appt-list .appt-row .row-service .svc-price { font-size: 12px; color: #86868b; margin-left: 8px; }
+.client-appt-list .no-appts { text-align: center; color: #86868b; padding: 40px; font-size: 14px; }
+.client-list::-webkit-scrollbar, .calendar-body::-webkit-scrollbar { width: 4px; }
+.client-list::-webkit-scrollbar-track, .calendar-body::-webkit-scrollbar-track { background: transparent; }
+.client-list::-webkit-scrollbar-thumb, .calendar-body::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 2px; }
+.loading { display: flex; align-items: center; justify-content: center; height: 100%; color: #86868b; font-size: 14px; flex-direction: column; gap: 8px; }
+.loading .spinner { width: 24px; height: 24px; border: 3px solid #e8e8ed; border-top-color: #0071e3; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.gear-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 6px; color: #86868b; touch-action: manipulation; line-height: 1; }
+.gear-btn:hover { color: #1d1d1f; }
+.settings-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 10; }
+.settings-overlay.active { display: block; }
+.settings-panel { display: none; position: fixed; top: 0; right: -400px; width: 380px; max-width: 100%; height: 100%; height: 100dvh; background: #fff; z-index: 11; box-shadow: -2px 0 12px rgba(0,0,0,0.15); flex-direction: column; transition: right 0.2s ease; }
+.settings-panel.open { right: 0; display: flex; }
+.settings-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #d2d2d7; flex-shrink: 0; }
+.settings-header h2 { font-size: 16px; font-weight: 600; }
+.settings-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #86868b; padding: 0 4px; line-height: 1; }
+.settings-close:hover { color: #1d1d1f; }
+.settings-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
+.settings-body-main { flex: 1; }
+.settings-section { margin-bottom: 24px; }
+.accordion-toggle { cursor:pointer; user-select:none; }
+.accordion-toggle:hover { opacity:0.7; }
+.accordion-content { margin-top:8px; }
+.settings-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #1d1d1f; }
+.svc-type-row { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e8e8ed; border-radius: 6px; margin-bottom: 6px; background: #fafafa; }
+.svc-type-row .svc-machine { font-size: 11px; color: #86868b; min-width: 90px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; flex-shrink: 0; }
+.svc-type-row .svc-display { flex: 1; min-width: 0; }
+.svc-type-row .svc-display input { width: 100%; padding: 4px 8px; border: 1px solid #d2d2d7; border-radius: 4px; font-size: 13px; font-family: inherit; }
+.svc-type-row .svc-display input:focus { border-color: #0071e3; outline: none; }
+.svc-type-row .svc-color input[type="color"] { width: 32px; height: 28px; border: 1px solid #d2d2d7; border-radius: 4px; padding: 1px; cursor: pointer; background: none; vertical-align: middle; }
+.svc-type-row .svc-dur select { padding: 4px 4px; border: 1px solid #d2d2d7; border-radius: 4px; font-size: 12px; font-family: inherit; background: #fff; cursor: pointer; }
+.settings-section .btn-save { margin-top: 8px; }
+.svc-type-row .sty-active { flex-shrink:0;display:flex;align-items:center; }
+.svc-type-row .sty-active input[type="checkbox"] { width:16px;height:16px;cursor:pointer; }
+@media (max-width: 768px) {
+  .menu-btn { display: block; }
+  .sidebar-overlay.active { display: block; }
+  .sidebar { position: fixed; top: 0; left: -300px; width: 280px; min-width: 280px; height: 100%; height: 100dvh; z-index: 9; transition: left 0.2s ease; box-shadow: 2px 0 12px rgba(0,0,0,0.15); }
+  .sidebar.open { left: 0; }
+  header h1 { font-size: 15px; }
+  .detail-panel { padding: 12px; }
+  .detail-panel .left .client-name { font-size: 16px; }
+  .calendar-body { padding: 10px 12px; }
+  .day-tl { height: 480px; }
+  .tl-h { height: 40px; font-size: 9px; }
+  .tl-line { height: 40px; }
+  .wtl-body { height: 360px; }
+  .wtl-hour { height: 30px; line-height: 30px; }
+  .client-appt-list .appt-row { padding: 10px; }
+  .calendar-header .title { font-size: 13px; }
+}
+@media (max-width: 480px) {
+  header { padding: 10px 12px; gap: 8px; }
+  .calendar-header { padding: 8px 12px; }
+  .calendar-header .nav button { padding: 6px 10px; font-size: 13px; }
+  .view-toggle button { padding: 6px 10px; font-size: 12px; }
+  .settings-panel { width: 100%; right: -100%; }
+}
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:20; touch-action:none; }
+.modal-overlay.active { display:block; }
+.modal-panel { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; z-index:21; max-width:380px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:0 4px 24px rgba(0,0,0,0.2); }
+.modal-panel.open { display:block; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid #d2d2d7; }
+.modal-header h2 { font-size:16px; font-weight:600; }
+.modal-close { background:none; border:none; font-size:24px; cursor:pointer; color:#86868b; padding:0 4px; line-height:1; }
+.modal-close:hover { color:#1d1d1f; }
+.modal-body { padding:16px; }
+.modal-section { margin-bottom:16px; }
+.modal-section h3 { font-size:12px; font-weight:600; color:#86868b; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.modal-section p { font-size:14px; margin:2px 0; }
+.modal-section .big-name { font-size:20px; font-weight:600; word-wrap:break-word; }
+.btn-view-all { display:inline-block; margin-top:8px; padding:6px 14px; border:1px solid #d2d2d7; border-radius:6px; cursor:pointer; font-size:13px; color:#0071e3; background:none; touch-action:manipulation; }
+.btn-view-all:hover { background:#f0f0f0; }
+.client-search-result:hover { background:#f0f0f0; }
+.client-search-result:last-child { border-bottom:none !important; }
+.modal-edit-row { display:flex; align-items:center; gap:8px; margin:8px 0; }
+.modal-edit-row label { font-size:12px; color:#86868b; min-width:60px; flex-shrink:0; }
+.modal-edit-row input, .modal-edit-row select { flex:1; padding:6px 8px; border:1px solid #d2d2d7; border-radius:6px; font-size:13px; font-family:inherit; background:#fff; }
+.modal-edit-row input:focus, .modal-edit-row select:focus { border-color:#0071e3; outline:none; }
+.modal-status { font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <button class="menu-btn" id="menuBtn">&#9776;</button>
+  <h1>Salon Appointments</h1>
+  <button class="gear-btn" id="settingsBtn">&#9881;</button>
+</header>
+<div class="container">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Search by name..." autofocus>
+    </div>
+    <div class="client-count"><span id="visibleCount">0</span> / <span id="totalCount">0</span> clients</div>
+    <div class="client-list" id="clientList"></div>
+  </div>
+  <div class="main">
+    <div class="detail-panel" id="detailPanel">
+      <div class="top-row">
+        <div class="left">
+          <button class="btn-back" id="backBtn" style="display:none">&larr; All Appointments</button>
+          <div class="client-name" id="detailName">All Appointments</div>
+          <div class="client-info" id="detailInfo"></div>
+          <div id="detailLeftActions" style="display:inline-flex;align-items:center;gap:6px"></div>
+        </div>
+        <div class="right" id="detailRight">
+          <button class="btn-new-appt" id="newApptBtn">+ New Appointment</button>
+        </div>
+      </div>
+    </div>
+    <div class="calendar-header" id="calHeader">
+      <div class="nav-row">
+        <div class="nav">
+          <button id="prevBtn">&larr;</button>
+          <span class="title" id="calTitle"></span>
+          <button id="nextBtn">&rarr;</button>
+        </div>
+        <div class="btn-group">
+          <button id="todayBtn">Today</button>
+          <label class="date-picker-label">
+            <span class="dp-text icon-only">&#128197;</span>
+            <input type="date" id="datePicker">
+          </label>
+        </div>
+      </div>
+      <div class="controls-row">
+        <div class="view-toggle">
+          <button id="weekViewBtn">Week</button>
+          <button id="dayViewBtn" class="active">Day</button>
+        </div>
+        <select class="stylist-filter" id="stylistFilter" title="Filter by stylist"><option value="ALL">All stylists</option></select>
+      </div>
+    </div>
+    <div class="calendar-body" id="calendarBody">
+      <div class="loading"><div class="spinner"></div><div>Loading data...</div></div>
+    </div>
+  </div>
+</div>
+<div class="settings-overlay" id="settingsOverlay"></div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-header">
+    <h2>Settings</h2>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn-save" id="settingsSaveBtn" style="display:none">Save</button>
+      <button class="settings-close" id="settingsClose">&times;</button>
+    </div>
+  </div>
+  <div class="settings-body">
+    <div class="settings-body-main">
+      <div class="settings-section">
+        <h3>Site Name</h3>
+        <input type="text" id="siteNameInput" style="width:100%;padding:8px;border:1px solid #d2d2d7;border-radius:6px;font-size:14px;font-family:inherit;box-sizing:border-box" placeholder="Salon Appointments">
+      </div>
+      <div class="settings-section">
+        <h3 class="accordion-toggle" id="svcTypeAccordionToggle">&#9654; Service Types</h3>
+        <div class="accordion-content" id="svcTypeAccordionContent" style="display:none">
+          <div id="serviceTypeList"></div>
+          <span class="save-status" id="svcTypeStatus"></span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3 class="accordion-toggle" id="stylistAccordionToggle">&#9654; Stylists</h3>
+        <div class="accordion-content" id="stylistAccordionContent" style="display:none">
+          <div id="stylistList"></div>
+          <span class="save-status" id="stylistStatus"></span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:auto;border-top:1px solid #e8e8ed;padding-top:12px;display:flex;justify-content:space-between;align-items:center">
+      <button class="btn-save" id="backupBtn" style="font-size:13px;padding:6px 12px">💾 Backup</button>
+      <a href="?revisions" style="color:#0071e3;text-decoration:none;font-size:14px;font-weight:500">🕒 History</a>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="apptModalOverlay"></div>
+<div class="modal-panel" id="apptModal">
+  <div class="modal-header">
+    <h2>Appointment Details</h2>
+    <button class="modal-close" id="modalClose">&times;</button>
+  </div>
+  <div class="modal-body" id="modalBody"></div>
+</div>
+<script>
+var CLIENTS = [], LOOKUP = {}, filtered = [], selectedId = null, viewMode = 'day', focusDate = new Date(), allAppointments = [], editing = false, VIEW_KEY = 'salon_view_state', serviceTypes = [], serviceTypeMap = {}, siteName = '', stylists = [], stylistMap = {}, currentStylist = 'ALL';
+
+function applySiteName(name) {
+  siteName = name || '';
+  var h1 = document.querySelector('header h1');
+  if (h1) h1.textContent = siteName || 'Salon Appointments';
+  document.title = siteName || 'Salon Appointments';
+}
+
+function saveViewState() {
+  try { localStorage.setItem(VIEW_KEY, JSON.stringify({viewMode: viewMode, focusDate: toDateStr(focusDate), selectedId: selectedId})); } catch(e) {}
+}
+function restoreViewState() {
+  try {
+    var raw = localStorage.getItem(VIEW_KEY);
+    if (!raw) return;
+    var s = JSON.parse(raw);
+    if (s.viewMode === 'day' || s.viewMode === 'week') viewMode = s.viewMode;
+    if (s.focusDate) { var d = parseDate(s.focusDate); if (d) focusDate = d; }
+    selectedId = s.selectedId || null;
+  } catch(e) {}
+}
+
+function to12h(s) { if (!s) return ''; var h=parseInt(s.split(':')[0],10), m=s.split(':')[1]; if (isNaN(h)) return ''; return (h===0?12:h>12?h-12:h)+':'+m+(h>=12?' PM':' AM'); }
+function parseDate(s) { var m = String(s).match(/^(\d+)-(\d+)-(\d+)/); return m ? new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3])) : null; }
+function toDateStr(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtDateHeading(d) { return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }
+function calcEndTime(timeStr, duration) { if (!timeStr) return ''; var p=timeStr.split(':'); var h=parseInt(p[0],10), m=parseInt(p[1],10); var t=h*60+m+parseInt(duration||0,10); return String(Math.floor(t/60)%24).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); }
+function timeToMinutes(s) { if (!s) return 0; var p=s.split(':'); return parseInt(p[0],10)*60+parseInt(p[1],10); }
+function layoutOverlaps(appts) {
+  if (!appts || !appts.length) return;
+  for (var i = 0; i < appts.length; i++) { var a=appts[i]; a._sm=timeToMinutes(a.time); a._em=a._sm+(parseInt(a.duration,10)||60); }
+  appts.sort(function(a,b){ return a._sm-b._sm || a._em-b._em; });
+  var groups=[], cur=[appts[0]], curEnd=appts[0]._em;
+  for (var i = 1; i < appts.length; i++) {
+    if (appts[i]._sm < curEnd) { cur.push(appts[i]); if (appts[i]._em>curEnd) curEnd=appts[i]._em; }
+    else { groups.push(cur); cur=[appts[i]]; curEnd=appts[i]._em; }
+  }
+  groups.push(cur);
+  for (var g = 0; g < groups.length; g++) {
+    var group=groups[g], cols=[];
+    for (var i = 0; i < group.length; i++) {
+      var a=group[i], c=0;
+      while (c<cols.length && cols[c]>a._sm) c++;
+      if (c>=cols.length) cols.push(a._em); else cols[c]=a._em;
+      a._col=c;
+    }
+    for (var i = 0; i < group.length; i++) group[i]._cols=cols.length;
+  }
+}
+function isMobile() { return window.innerWidth <= 768; }
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('active');
+}
+function toggleSidebar() {
+  var s = document.getElementById('sidebar');
+  if (s.classList.contains('open')) closeSidebar(); else openSidebar();
+}
+
+function openSettings() {
+  document.getElementById('settingsPanel').classList.add('open');
+  document.getElementById('settingsOverlay').classList.add('active');
+  renderServiceTypes();
+  renderStylists();
+}
+function closeSettings() {
+  document.getElementById('settingsPanel').classList.remove('open');
+  document.getElementById('settingsOverlay').classList.remove('active');
+}
+function renderServiceTypes() {
+  var snEl = document.getElementById('siteNameInput');
+  if (snEl) snEl.value = siteName;
+  var durOpts = '';
+  for (var d = 15; d <= 120; d += 15) durOpts += '<option value="' + d + '">' + d + ' min</option>';
+  var html = '';
+  for (var i = 0; i < serviceTypes.length; i++) {
+    var st = serviceTypes[i];
+    html += '<div class="svc-type-row"><span class="svc-machine" title="' + st.machine + '">' + st.machine + '</span><div class="svc-display"><input type="text" id="st_disp_' + i + '" value="' + (st.display||'').replace(/"/g,'&quot;') + '" placeholder="Display name"></div><div class="svc-color"><input type="color" id="st_col_' + i + '" value="' + (st.color||'#cccccc') + '"></div><div class="svc-dur"><select id="st_dur_' + i + '">' + durOpts.replace('value="' + (st.defaultDuration||60) + '"', 'value="' + (st.defaultDuration||60) + '" selected') + '</select></div></div>';
+  }
+  document.getElementById('serviceTypeList').innerHTML = html;
+  document.getElementById('siteNameInput').addEventListener('input', enableSettingsSave);
+  for (var i = 0; i < serviceTypes.length; i++) {
+    document.getElementById('st_disp_' + i).addEventListener('input', enableSettingsSave);
+    document.getElementById('st_col_' + i).addEventListener('input', enableSettingsSave);
+    document.getElementById('st_dur_' + i).addEventListener('change', enableSettingsSave);
+  }
+  document.getElementById('settingsSaveBtn').style.display = 'none';
+}
+function enableSettingsSave() {
+  document.getElementById('settingsSaveBtn').style.display = '';
+}
+
+function renderStylists() {
+  var html = '';
+  if (!stylists.length) stylists = [{machine: 'stylist1', display: 'Stylist 1', active: true}];
+  stylistMap = {};
+  for (var i = 0; i < stylists.length; i++) {
+    var st = stylists[i];
+    if (st.active === undefined) st.active = true;
+    stylistMap[st.machine] = st;
+    html += '<div class="svc-type-row"><span class="svc-machine" style="font-size:11px">' + st.machine + '</span><div class="svc-display"><input type="text" id="sty_disp_' + i + '" value="' + (st.display||'').replace(/"/g,'&quot;') + '" placeholder="Display name" class="sty-input"></div><div class="sty-active"><input type="checkbox" id="sty_active_' + i + '"' + (st.active ? ' checked' : '') + '></div></div>';
+  }
+  html += '<div style="margin-top:8px"><button id="addStylistBtn" style="padding:6px 14px;border:1px solid #d2d2d7;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">+ Add stylist</button></div>';
+  document.getElementById('stylistList').innerHTML = html;
+  for (var i = 0; i < stylists.length; i++) {
+    var inp = document.getElementById('sty_disp_' + i);
+    if (inp) inp.addEventListener('input', enableSettingsSave);
+    var chk = document.getElementById('sty_active_' + i);
+    if (chk) chk.addEventListener('change', enableSettingsSave);
+  }
+  document.getElementById('addStylistBtn').addEventListener('click', function() {
+    var n = stylists.length + 1;
+    while (stylists.some(function(s){ return s.machine === 'stylist' + n; })) n++;
+    stylists.push({machine: 'stylist' + n, display: 'Stylist ' + n, active: true});
+    renderStylists();
+    enableSettingsSave();
+  });
+}
+
+function updateStylistFilter() {
+  var sel = document.getElementById('stylistFilter');
+  if (!sel) return;
+  var cur = sel.value;
+  var h = '<option value="ALL">All stylists</option>';
+  for (var i = 0; i < stylists.length; i++) {
+    if (!stylists[i].active) continue;
+    h += '<option value="' + stylists[i].machine.replace(/"/g,'&quot;') + '">' + (stylists[i].display || stylists[i].machine) + '</option>';
+  }
+  sel.innerHTML = h;
+  if (cur && sel.querySelector('option[value="' + cur.replace(/"/g,'\\"') + '"]')) sel.value = cur;
+  else sel.value = 'ALL';
+}
+
+function saveServiceTypes() {
+  var arr = [];
+  for (var i = 0; i < serviceTypes.length; i++) {
+    var dispEl = document.getElementById('st_disp_' + i);
+    var colEl = document.getElementById('st_col_' + i);
+    var durEl = document.getElementById('st_dur_' + i);
+    arr.push({machine: serviceTypes[i].machine, display: dispEl ? dispEl.value : serviceTypes[i].display, color: colEl ? colEl.value : serviceTypes[i].color, defaultDuration: durEl ? parseInt(durEl.value,10) : (serviceTypes[i].defaultDuration||60)});
+  }
+  var snEl = document.getElementById('siteNameInput');
+  var newSiteName = snEl ? snEl.value : siteName;
+  var stylistArr = [];
+  for (var i = 0; i < stylists.length; i++) {
+    var dispEl = document.getElementById('sty_disp_' + i);
+    var activeEl = document.getElementById('sty_active_' + i);
+    stylistArr.push({machine: stylists[i].machine, display: dispEl ? dispEl.value : (stylists[i].display || stylists[i].machine), active: activeEl ? activeEl.checked : true});
+  }
+  var statusEl = document.getElementById('svcTypeStatus');
+  statusEl.textContent = 'Saving...';
+  statusEl.className = 'save-status';
+  fetch('api/data.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action:'update_service_types', serviceTypes: arr, siteName: newSiteName, stylists: stylistArr})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    if (result.success) {
+      serviceTypes = arr;
+      serviceTypeMap = {};
+      for (var i = 0; i < serviceTypes.length; i++) serviceTypeMap[serviceTypes[i].machine] = serviceTypes[i];
+      stylists = stylistArr;
+      stylistMap = {};
+      for (var i = 0; i < stylists.length; i++) stylistMap[stylists[i].machine] = stylists[i];
+      updateStylistFilter();
+      applySiteName(newSiteName);
+      document.getElementById('settingsSaveBtn').style.display = 'none';
+      statusEl.textContent = 'Saved!';
+      statusEl.className = 'save-status';
+      if (!selectedId) renderAllAppts();
+      setTimeout(function(){ statusEl.textContent = ''; }, 2000);
+    } else {
+      statusEl.textContent = 'Error: ' + (result.error || 'Unknown');
+      statusEl.className = 'save-status error';
+    }
+  })
+  .catch(function(err){
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'save-status error';
+  });
+}
+
+function loadData() {
+  fetch('api/data.php')
+    .then(function(r) { if (!r.ok) throw new Error('Failed to load'); return r.json(); })
+    .then(function(data) {
+      var clients = data.clients;
+      for (var i = 0; i < clients.length; i++) {
+        var c = clients[i];
+        c._name = (c.firstName || '') + ' ' + (c.lastName || '');
+        c._name = c._name.trim() || ('Client #' + c.id);
+        if (c.appointments) c.appointments.sort(function(a,b){ return (a.date||'').localeCompare(b.date||'') || (a.time||'').localeCompare(b.time||''); });
+      }
+      CLIENTS = clients.sort(function(a,b){ return a._name.toLowerCase().localeCompare(b._name.toLowerCase()); });
+      LOOKUP = {};
+      for (var i = 0; i < CLIENTS.length; i++) LOOKUP[String(CLIENTS[i].id)] = CLIENTS[i];
+      serviceTypes = data.serviceTypes || [];
+      serviceTypeMap = {};
+      for (var i = 0; i < serviceTypes.length; i++) serviceTypeMap[serviceTypes[i].machine] = serviceTypes[i];
+      stylists = data.stylists || [];
+      stylistMap = {};
+      for (var i = 0; i < stylists.length; i++) stylistMap[stylists[i].machine] = stylists[i];
+      updateStylistFilter();
+      applySiteName(data.siteName || '');
+      document.getElementById('totalCount').textContent = CLIENTS.length;
+      buildApptList();
+      filterClients();
+      restoreViewState();
+      if (selectedId && LOOKUP[String(selectedId)]) { selectClient(selectedId); }
+      else { document.getElementById('dayViewBtn').className = viewMode === 'day' ? 'active' : '';
+             document.getElementById('weekViewBtn').className = viewMode === 'week' ? 'active' : '';
+             renderAllAppts(); }
+    })
+    .catch(function(err) {
+      document.getElementById('calendarBody').innerHTML = '<div class="empty-state"><div class="big">&#9888;</div><div>Failed to load data: ' + err.message + '</div></div>';
+    });
+}
+
+function buildApptList() {
+  allAppointments = [];
+  for (var i = 0; i < CLIENTS.length; i++) {
+    var c = CLIENTS[i];
+    if (!c.appointments) continue;
+    for (var j = 0; j < c.appointments.length; j++) {
+      var a = c.appointments[j];
+      var ct = a.time || '';
+      allAppointments.push({
+        date: a.date,
+        time: ct,
+        timeDisplay: to12h(ct),
+        duration: a.duration,
+        service: a.service || '',
+        price: a.price || '',
+        stylist: a.stylist || 'stylist1',
+        clientId: c.id,
+        clientName: c._name,
+        _dateObj: parseDate(a.date),
+        _sortTime: ct
+      });
+    }
+  }
+}
+
+function getDayAppts(dateStr) {
+  return allAppointments.filter(function(a){ return a._dateObj && toDateStr(a._dateObj) === dateStr && (currentStylist === 'ALL' || a.stylist === currentStylist); }).sort(function(a,b){ return (a._sortTime||'').localeCompare(b._sortTime||''); });
+}
+
+function getWeekAppts(weekStart) {
+  var result = [];
+  for (var i = 0; i < 7; i++) { var d = new Date(weekStart); d.setDate(d.getDate()+i); result.push({date:d, dateStr:toDateStr(d), appts:getDayAppts(toDateStr(d))}); }
+  return result;
+}
+
+function getMonday(d) { var r=new Date(d); var day=r.getDay(); r.setDate(r.getDate()-day+(day===0?-6:1)); r.setHours(0,0,0,0); return r; }
+
+function renderDay() {
+  var ds = toDateStr(focusDate), appts = getDayAppts(ds);
+  document.getElementById('calTitle').textContent = fmtDateHeading(focusDate);
+  layoutOverlaps(appts);
+  var startHour = 8, endHour = 20, totalMin = (endHour - startHour) * 60;
+  var html = '<div class="day-tl"><div class="tl-hours">';
+  for (var h = startHour; h < endHour; h++) {
+    var label = (h === 0 ? 12 : h > 12 ? h - 12 : h) + ':00 ' + (h >= 12 ? 'PM' : 'AM');
+    html += '<div class="tl-h">' + label + '</div>';
+  }
+  html += '</div><div class="tl-grid">';
+  for (var h = startHour; h < endHour; h++) html += '<div class="tl-line"></div>';
+  if (!appts.length) {
+    html += '<div class="tl-empty">No appointments</div>';
+  } else {
+    for (var i = 0; i < appts.length; i++) {
+      var a = appts[i];
+      var topPct = Math.max(0, ((a._sm - startHour * 60) / totalMin) * 100);
+      var bottomPct = Math.min(100, ((a._em - startHour * 60) / totalMin) * 100);
+      var hgtPct = Math.max(0, bottomPct - topPct);
+      var wPct = 100 / a._cols;
+      var lPct = a._col * wPct;
+      var st = serviceTypeMap[a.service];
+      var sc = st ? st.color : '#ccc';
+      var svcLabel = st ? st.display : (a.service || '');
+      var endTime = calcEndTime(a.time, a.duration);
+      html += '<div class="tl-appt" style="top:' + topPct + '%;height:' + hgtPct + '%;left:' + lPct + '%;width:' + wPct + '%;background:' + sc + '" data-client-id="' + a.clientId + '" data-date="' + a.date + '" data-time="' + a.time + '"><div class="tl-appt-row"><span class="tl-appt-time">' + a.timeDisplay + (endTime ? '\u2013' + to12h(endTime) : '') + '</span> <span class="tl-appt-client">' + (a.clientName || '') + '</span></div><div class="tl-appt-svc">' + svcLabel + '</div></div>';
+    }
+  }
+  html += '</div></div>';
+  document.getElementById('calendarBody').innerHTML = html;
+  attachApptClicks();
+}
+
+function renderWeek() {
+  var monday = getMonday(focusDate), days = getWeekAppts(monday);
+  var ts = monday.toLocaleDateString('en-US',{month:'short',day:'numeric'}), te = new Date(monday); te.setDate(te.getDate()+6);
+  document.getElementById('calTitle').textContent = ts + ' - ' + te.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var todayStr = toDateStr(new Date()), startHour = 8, endHour = 20, totalMin = (endHour - startHour) * 60;
+  var html = '<div class="week-tl"><div class="wtl-header"><div class="wtl-h-spacer"></div>';
+  for (var di = 0; di < 7; di++) {
+    var d = days[di];
+    html += '<div class="wtl-h-cell' + (d.dateStr === todayStr ? ' today' : '') + '" data-date="' + d.dateStr + '">' + d.date.toLocaleDateString('en-US',{weekday:'short'}) + ' ' + d.date.getDate() + '</div>';
+  }
+  html += '</div><div class="wtl-body"><div class="wtl-hours-col">';
+  for (var h = startHour; h < endHour; h++) {
+    var label = (h === 0 ? 12 : h > 12 ? h - 12 : h) + ':00 ' + (h >= 12 ? 'PM' : 'AM');
+    html += '<div class="wtl-hour">' + label + '</div>';
+  }
+  html += '</div>';
+  for (var di = 0; di < 7; di++) {
+    var day = days[di];
+    html += '<div class="wtl-day-col' + (day.dateStr === todayStr ? ' today' : '') + '">';
+    if (day.appts.length) {
+      layoutOverlaps(day.appts);
+      for (var i = 0; i < day.appts.length; i++) {
+        var a = day.appts[i];
+        var topPct = Math.max(0, ((a._sm - startHour * 60) / totalMin) * 100);
+        var bottomPct = Math.min(100, ((a._em - startHour * 60) / totalMin) * 100);
+        var hgtPct = Math.max(0, bottomPct - topPct);
+        var wPct = 100 / a._cols;
+        var lPct = a._col * wPct;
+        var st = serviceTypeMap[a.service];
+        var sc = st ? st.color : '#ccc';
+        var svcLabel = st ? st.display : (a.service || '');
+        html += '<div class="wtl-appt" style="top:' + topPct + '%;height:' + hgtPct + '%;left:' + lPct + '%;width:' + wPct + '%;background:' + sc + '" title="' + (a.clientName||'') + ' ' + svcLabel + '" data-client-id="' + a.clientId + '" data-date="' + a.date + '" data-time="' + a.time + '"></div>';
+      }
+    }
+    html += '</div>';
+  }
+  html += '</div></div>';
+  document.getElementById('calendarBody').innerHTML = html;
+  attachApptClicks();
+}
+
+function showEditMode(c) {
+  editing = true;
+  document.getElementById('detailLeftActions').innerHTML = '<button class="btn-save" id="saveBtn">Save</button><button class="btn-cancel" id="cancelBtn">Cancel</button>';
+  var fields = [
+    {label:'First', key:'firstName'},
+    {label:'Last', key:'lastName'},
+    {label:'Phone 1', key:'phone1'},
+    {label:'Phone 2', key:'phone2'},
+    {label:'Phone 3', key:'phone3'},
+    {label:'Address', key:'address1'},
+    {label:'City', key:'city'},
+    {label:'State', key:'state'},
+    {label:'Zip', key:'zip'},
+    {label:'Birthday', key:'birthday'}
+  ];
+  var html = '';
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    var val = c[f.key] || '';
+    html += '<div class="edit-field"><label>' + f.label + '</label><input type="text" id="ef_' + f.key + '" value="' + val.replace(/"/g,'&quot;') + '"></div>';
+  }
+  html += '<div class="save-status" id="saveStatus"></div>';
+  document.getElementById('detailName').textContent = '';
+  document.getElementById('detailInfo').innerHTML = html;
+  document.getElementById('saveBtn').addEventListener('click', function(){ saveClient(c.id, fields); });
+  document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
+}
+
+function cancelEdit() {
+  editing = false;
+  if (selectedId && LOOKUP[String(selectedId)]) {
+    renderClientApptList(LOOKUP[String(selectedId)]);
+  } else {
+    renderAllAppts();
+  }
+}
+
+function saveClient(id, fields) {
+  var data = {action:'update_client', id: id, fields: {}};
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    var el = document.getElementById('ef_' + f.key);
+    if (el) data.fields[f.key] = el.value;
+  }
+  var statusEl = document.getElementById('saveStatus');
+  statusEl.textContent = 'Saving...';
+  statusEl.className = 'save-status';
+  fetch('api/data.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(result) {
+    if (result.success) {
+      statusEl.textContent = 'Saved!';
+      statusEl.className = 'save-status';
+      var c = LOOKUP[String(id)];
+      if (c) {
+        for (var i = 0; i < fields.length; i++) {
+          var f = fields[i];
+          if (data.fields[f.key] !== undefined) c[f.key] = data.fields[f.key];
+        }
+        c._name = (c.firstName || '') + ' ' + (c.lastName || '');
+        c._name = c._name.trim() || ('Client #' + c.id);
+        CLIENTS.sort(function(a,b){ return a._name.toLowerCase().localeCompare(b._name.toLowerCase()); });
+        filterClients();
+      }
+      setTimeout(function(){ cancelEdit(); }, 800);
+    } else {
+      statusEl.textContent = 'Error: ' + (result.error || 'Unknown');
+      statusEl.className = 'save-status error';
+    }
+  })
+  .catch(function(err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'save-status error';
+  });
+}
+
+function renderClientApptList(c) {
+  editing = false;
+  var appts = c.appointments || [];
+  document.getElementById('detailName').textContent = c._name;
+  document.getElementById('backBtn').style.display = 'inline-block';
+  document.getElementById('calHeader').style.display = 'none';
+  document.getElementById('detailLeftActions').innerHTML = '<button class="btn-edit" id="editBtn">&#9998; Edit</button>';
+  var info = [];
+  if (c.phone1) info.push('\u{1F4DE} <a href="tel:' + c.phone1.replace(/[^0-9+]/g,'') + '" style="color:inherit;text-decoration:none">' + c.phone1 + '</a>');
+  if (c.city && c.state) info.push('\u{1F4CD} ' + c.city + ', ' + c.state);
+  if (c.birthday) info.push('\u{1F382} ' + c.birthday);
+  document.getElementById('detailInfo').innerHTML = info.map(function(s){ return '<span>' + s + '</span>'; }).join('');
+  if (!appts.length) { document.getElementById('calendarBody').innerHTML = '<div class="client-appt-list"><div class="no-appts">No appointments on record</div></div>'; return; }
+  var html = '<div class="client-appt-list">', cur = null;
+  for (var i = appts.length - 1; i >= 0; i--) {
+    var a = appts[i];
+    var st = serviceTypeMap[a.service];
+    var svcLabel = st ? st.display : (a.service || '\u2014');
+    var ds = a.date ? fmtDateHeading(parseDate(a.date)) : 'Unknown date';
+    if (ds !== cur) { cur = ds; html += '<div class="appt-group"><div class="group-date">' + ds + '</div>'; }
+    var endTime = calcEndTime(a.time, a.duration);
+    var t = to12h(a.time) + (endTime ? '\u2013' + to12h(endTime) : '');
+    var p = a.price ? ' <span class="svc-price">$' + a.price + '</span>' : '';
+    html += '<div class="appt-row" data-client-id="' + c.id + '" data-date="' + a.date + '" data-time="' + a.time + '"><div class="row-time">' + t + '</div><div class="row-service"><span class="svc">' + svcLabel + p + '</span></div></div>';
+  }
+  html += '</div></div>';
+  document.getElementById('calendarBody').innerHTML = html;
+  document.getElementById('editBtn').addEventListener('click', function(){ showEditMode(c); });
+  var rows = document.querySelectorAll('.client-appt-list .appt-row[data-date]');
+  for (var i = 0; i < rows.length; i++) {
+    rows[i].addEventListener('click', function(){
+      var date = this.dataset.date;
+      var time = this.dataset.time;
+      if (date) navigateToAppt(date, time);
+    });
+  }
+}
+
+function renderAllAppts() {
+  editing = false;
+  document.getElementById('detailName').textContent = 'All Appointments';
+  document.getElementById('detailInfo').innerHTML = '';
+  document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('detailLeftActions').innerHTML = '';
+  document.getElementById('calHeader').style.display = 'block';
+  if (viewMode === 'week') renderWeek(); else renderDay();
+  saveViewState();
+}
+
+function selectClient(id) {
+  if (editing) return;
+  selectedId = id;
+  var c = LOOKUP[String(id)];
+  if (!c) return;
+  if (isMobile()) closeSidebar();
+  var items = document.querySelectorAll('.client-item');
+  for (var i = 0; i < items.length; i++) items[i].classList.remove('active');
+  var el = document.querySelector('.client-item[data-id="' + id + '"]');
+  if (el) el.classList.add('active');
+  renderClientApptList(c);
+  document.getElementById('calendarBody').scrollTop = 0;
+  saveViewState();
+}
+
+function clearSelection() { if (editing) return; selectedId = null; var items = document.querySelectorAll('.client-item'); for (var i = 0; i < items.length; i++) items[i].classList.remove('active'); renderAllAppts(); saveViewState(); }
+
+function navigateToAppt(date, time) {
+  clearSelection();
+  var parts = date.split('-');
+  focusDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  viewMode = 'day';
+  document.getElementById('dayViewBtn').classList.add('active');
+  document.getElementById('weekViewBtn').classList.remove('active');
+  renderDay();
+  saveViewState();
+  setTimeout(function(){
+    var cards = document.querySelectorAll('.tl-appt');
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].dataset.date === date && cards[i].dataset.time === time) {
+        cards[i].style.background = '#fff3cd';
+        cards[i].style.border = '2px solid #ffc107';
+        cards[i].scrollIntoView({behavior:'smooth', block:'center'});
+        break;
+      }
+    }
+  }, 50);
+}
+
+function attachApptClicks() {
+  dragInit();
+  var hCells = document.querySelectorAll('.wtl-h-cell[data-date]');
+  for (var i = 0; i < hCells.length; i++) {
+    hCells[i].addEventListener('click', function() {
+      if (editing) return;
+      var d = parseDate(this.dataset.date);
+      if (!d) return;
+      focusDate = d;
+      viewMode = 'day';
+      document.getElementById('dayViewBtn').classList.add('active');
+      document.getElementById('weekViewBtn').classList.remove('active');
+      renderAllAppts();
+    });
+  }
+}
+
+// --- Drag and Drop + Click to Show Details ---
+var DRAG = null, dragTip = null, CLICK_DRAG = null;
+
+function dragInit() {
+  document.querySelectorAll('.tl-appt, .wtl-appt').forEach(function(el) {
+    if (el._dragInit) return;
+    el._dragInit = true;
+    el.addEventListener('mousedown', apptMouseDown);
+    el.addEventListener('touchstart', apptTouchStart, {passive: false});
+  });
+}
+
+function apptMouseDown(e) {
+  if (e.button !== 0 || editing) return;
+  startClickOrDrag(e.currentTarget, e.clientX, e.clientY);
+  document.addEventListener('mousemove', mouseMoveHandler);
+  document.addEventListener('mouseup', mouseUpHandler);
+  e.preventDefault();
+}
+
+function apptTouchStart(e) {
+  if (editing) return;
+  var t = e.touches[0];
+  startClickOrDrag(e.currentTarget, t.clientX, t.clientY);
+  document.addEventListener('touchmove', touchMoveHandler, {passive: false});
+  document.addEventListener('touchend', touchEndHandler);
+  e.preventDefault();
+}
+
+function startClickOrDrag(el, cx, cy) {
+  CLICK_DRAG = {el: el, startX: cx, startY: cy, timer: setTimeout(function() {
+    if (!CLICK_DRAG) return;
+    var cd = CLICK_DRAG;
+    CLICK_DRAG = null;
+    dragBegin(cd.el, cd.startX, cd.startY);
+  }, 1000)};
+}
+
+function mouseMoveHandler(e) {
+  if (CLICK_DRAG) return;
+  if (DRAG) dragMoveCommon(e.clientX, e.clientY);
+}
+
+function mouseUpHandler(e) {
+  document.removeEventListener('mousemove', mouseMoveHandler);
+  document.removeEventListener('mouseup', mouseUpHandler);
+  if (CLICK_DRAG) {
+    clearTimeout(CLICK_DRAG.timer);
+    var el = CLICK_DRAG.el;
+    CLICK_DRAG = null;
+    showApptModal(el.dataset.clientId, el.dataset.date, el.dataset.time);
+    e.preventDefault();
+    return;
+  }
+  dragEndCommon();
+}
+
+function touchMoveHandler(e) {
+  if (CLICK_DRAG) return;
+  if (DRAG) dragMoveCommon(e.touches[0].clientX, e.touches[0].clientY);
+}
+
+function touchEndHandler(e) {
+  document.removeEventListener('touchmove', touchMoveHandler);
+  document.removeEventListener('touchend', touchEndHandler);
+  if (CLICK_DRAG) {
+    clearTimeout(CLICK_DRAG.timer);
+    var el = CLICK_DRAG.el;
+    CLICK_DRAG = null;
+    showApptModal(el.dataset.clientId, el.dataset.date, el.dataset.time);
+    e.preventDefault();
+    return;
+  }
+  dragEndCommon();
+}
+
+function dragBegin(el, cx, cy) {
+  var rect = el.getBoundingClientRect();
+  DRAG = { el: el, clientId: el.dataset.clientId, oldDate: el.dataset.date, oldTime: el.dataset.time, isDay: el.classList.contains('tl-appt'), offsetY: cy - rect.top, offsetX: cx - rect.left, moved: false, newDate: el.dataset.date, newTime: el.dataset.time, origCss: el.style.cssText };
+  el.style.position = 'fixed';
+  el.style.left = rect.left + 'px';
+  el.style.top = rect.top + 'px';
+  el.style.width = rect.width + 'px';
+  el.style.height = rect.height + 'px';
+  el.style.margin = '0';
+  el.style.zIndex = '100';
+  el.classList.add('dragging');
+  if (!dragTip) { dragTip = document.createElement('div'); dragTip.className = 'drag-tip'; document.body.appendChild(dragTip); }
+  dragTip.textContent = to12h(DRAG.newTime) + ' ' + DRAG.newDate;
+  dragTip.style.display = 'block';
+}
+
+function dragMoveCommon(cx, cy) {
+  DRAG.moved = true;
+  DRAG.el.style.left = (cx - DRAG.offsetX) + 'px';
+  DRAG.el.style.top = (cy - DRAG.offsetY) + 'px';
+  dragTip.style.left = (cx + 12) + 'px';
+  dragTip.style.top = (cy - 20) + 'px';
+  var grid, dayIdx = -1;
+  if (DRAG.isDay) { grid = document.querySelector('.tl-grid'); }
+  else {
+    var body = document.querySelector('.wtl-body');
+    if (body) {
+      grid = body;
+      var bodyRect = body.getBoundingClientRect();
+      var relX = cx - bodyRect.left - 45;
+      var colW = (bodyRect.width - 45) / 7;
+      dayIdx = Math.max(0, Math.min(6, Math.floor(relX / colW)));
+    }
+  }
+  if (!grid) return;
+  var gridRect = grid.getBoundingClientRect();
+  var relY = Math.max(0, Math.min(gridRect.height, cy - gridRect.top - DRAG.offsetY));
+  var pct = relY / gridRect.height;
+  var mins = 480 + pct * 720;
+  mins = Math.round(mins / 15) * 15;
+  DRAG.newTime = String(Math.floor(mins / 60) % 24).padStart(2,'0') + ':' + String(mins % 60).padStart(2,'0');
+  if (!DRAG.isDay) {
+    var monday = getMonday(focusDate), nd = new Date(monday);
+    nd.setDate(monday.getDate() + dayIdx);
+    DRAG.newDate = toDateStr(nd);
+  }
+  dragTip.textContent = to12h(DRAG.newTime) + ' ' + DRAG.newDate;
+}
+
+function dragEndCommon() {
+  if (dragTip) dragTip.style.display = 'none';
+  if (!DRAG) return;
+  var changed = (DRAG.newTime !== DRAG.oldTime) || (DRAG.newDate !== DRAG.oldDate);
+  var clientId = DRAG.clientId, oldDate = DRAG.oldDate, oldTime = DRAG.oldTime, newDate = DRAG.newDate, newTime = DRAG.newTime, el = DRAG.el, origCss = DRAG.origCss;
+  DRAG = null;
+  if (changed && clientId && oldDate && oldTime && newDate && newTime) {
+    fetch('api/data.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action:'move_appointment', clientId: clientId, oldDate: oldDate, oldTime: oldTime, newDate: newDate, newTime: newTime})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(result){
+      if (result.success) {
+        for (var i = 0; i < allAppointments.length; i++) {
+          var a = allAppointments[i];
+          if (String(a.clientId) === String(clientId) && a.date === oldDate && a.time === oldTime) {
+            a.date = newDate; a.time = newTime; a.timeDisplay = to12h(newTime); a._sortTime = newTime;
+            if (a._dateObj) a._dateObj = parseDate(newDate);
+            break;
+          }
+        }
+        var c = LOOKUP[String(clientId)];
+        if (c && c.appointments) {
+          for (var i = 0; i < c.appointments.length; i++) {
+            if (c.appointments[i].date === oldDate && c.appointments[i].time === oldTime) {
+              c.appointments[i].date = newDate; c.appointments[i].time = newTime;
+              break;
+            }
+          }
+        }
+        renderAllAppts(); return;
+      }
+      el.style.cssText = origCss;
+    })
+    .catch(function(){ el.style.cssText = origCss; });
+  } else {
+    el.style.cssText = origCss;
+  }
+}
+
+var _modalData = null;
+
+function showApptModal(clientId, date, time) {
+  var c = LOOKUP[String(clientId)];
+  if (!c) return;
+  var appt = null;
+  if (c.appointments) {
+    for (var i = 0; i < c.appointments.length; i++) {
+      if (c.appointments[i].date === date && c.appointments[i].time === time) {
+        appt = c.appointments[i];
+        break;
+      }
+    }
+  }
+  if (!appt) return;
+  _modalData = {clientId: clientId, date: date, time: time, appt: appt};
+  renderApptModalReadOnly();
+  document.getElementById('apptModalOverlay').classList.add('active');
+  document.getElementById('apptModal').classList.add('open');
+}
+
+function renderApptModalReadOnly() {
+  if (!_modalData) return;
+  var c = LOOKUP[String(_modalData.clientId)];
+  var appt = _modalData.appt;
+  var date = _modalData.date;
+  var time = _modalData.time;
+  if (!c || !appt) return;
+  var st = serviceTypeMap[appt.service];
+  var svcLabel = st ? st.display : (appt.service || '\u2014');
+  var endTime = calcEndTime(time, appt.duration);
+  var html = '';
+  html += '<div class="modal-section"><p class="big-name">' + c._name + '</p></div>';
+  html += '<div class="modal-section"><h3>Appointment</h3>';
+  html += '<p>' + fmtDateHeading(parseDate(date)) + '</p>';
+  html += '<p>' + to12h(time) + (endTime ? ' \u2013 ' + to12h(endTime) : '') + (appt.price ? ' <span style="color:#86868b">$' + appt.price + '</span>' : '') + '</p>';
+  html += '<p>' + svcLabel + (appt.duration ? ' \u00b7 ' + appt.duration + ' min' : '') + '</p>';
+  var apptStylist = appt.stylist || 'stylist1';
+  var apptStylistDisp = (stylistMap[apptStylist] && stylistMap[apptStylist].display) || apptStylist;
+  html += '<p style="color:#86868b;font-size:12px">' + apptStylistDisp + '</p></div>';
+  var info = [];
+  if (c.phone1) info.push('\u{1F4DE} ' + c.phone1);
+  if (c.phone2) info.push('\u{1F4DE} ' + c.phone2);
+  if (c.phone3) info.push('\u{1F4DE} ' + c.phone3);
+  if (c.city && c.state) info.push('\u{1F4CD} ' + c.city + ', ' + c.state);
+  if (c.address1) info.push('\u{1F3E0} ' + c.address1);
+  if (c.birthday) info.push('\u{1F382} ' + c.birthday);
+  if (info.length) {
+    html += '<div class="modal-section"><h3>Client</h3>';
+    for (var i = 0; i < info.length; i++) html += '<p>' + info[i] + '</p>';
+    html += '</div>';
+  }
+  html += '<div class="modal-section" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-view-all" id="modalViewAll" data-client-id="' + _modalData.clientId + '">View all appointments</button><button class="btn-edit" id="modalEditBtn">Edit</button><button class="btn-cancel" id="modalDeleteBtn" style="color:#e34a2f;border-color:#e34a2f">Delete</button></div>';
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalViewAll').addEventListener('click', function() {
+    closeApptModal();
+    selectClient(parseInt(this.dataset.clientId));
+  });
+  document.getElementById('modalEditBtn').addEventListener('click', editApptModal);
+  document.getElementById('modalDeleteBtn').addEventListener('click', function() {
+    if (!confirm('Delete this appointment?')) return;
+    var cid = _modalData.clientId, od = _modalData.date, ot = _modalData.time;
+    fetch('api/data.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action:'delete_appointment', clientId: cid, date: od, time: ot})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(result){
+      if (result.success) {
+        for (var i = 0; i < allAppointments.length; i++) {
+          if (String(allAppointments[i].clientId) === String(cid) && allAppointments[i].date === od && allAppointments[i].time === ot) {
+            allAppointments.splice(i,1); break;
+          }
+        }
+        var c = LOOKUP[String(cid)];
+        if (c && c.appointments) {
+          for (var i = 0; i < c.appointments.length; i++) {
+            if (c.appointments[i].date === od && c.appointments[i].time === ot) {
+              c.appointments.splice(i,1); break;
+            }
+          }
+        }
+        closeApptModal();
+        if (selectedId && String(selectedId) === String(cid)) selectClient(selectedId);
+        else renderAllAppts();
+      } else { alert('Error: ' + (result.error || 'Delete failed')); }
+    })
+    .catch(function(err){ alert('Error: ' + err.message); });
+  });
+}
+
+function editApptModal() {
+  if (!_modalData) return;
+  var appt = _modalData.appt;
+  var date = _modalData.date;
+  var time = _modalData.time;
+  var durOpts = '';
+  for (var d = 15; d <= 120; d += 15) durOpts += '<option value="' + d + '"' + (parseInt(appt.duration||60,10) === d ? ' selected' : '') + '>' + d + ' min</option>';
+  var svcOpts = '';
+  for (var i = 0; i < serviceTypes.length; i++) {
+    var st = serviceTypes[i];
+    svcOpts += '<option value="' + st.machine.replace(/"/g,'&quot;') + '"' + (appt.service === st.machine ? ' selected' : '') + '>' + (st.display || st.machine) + '</option>';
+  }
+  var html = '';
+  html += '<div class="modal-section"><p class="big-name">Edit Appointment</p></div>';
+  html += '<div class="modal-section">';
+  html += '<div class="modal-edit-row"><label>Date</label><input type="date" id="editApptDate" value="' + date + '"></div>';
+  html += '<div class="modal-edit-row"><label>Time</label><input type="time" id="editApptTime" value="' + time + '"></div>';
+  html += '<div class="modal-edit-row"><label>Service</label><select id="editApptSvc">' + svcOpts + '</select></div>';
+  html += '<div class="modal-edit-row"><label>Price</label><input type="text" id="editApptPrice" value="' + (appt.price||'') + '"></div>';
+  html += '<div class="modal-edit-row"><label>Duration</label><select id="editApptDur">' + durOpts + '</select></div>';
+  var apptStylist = appt.stylist || 'stylist1';
+  var styOpts = '';
+  for (var i = 0; i < stylists.length; i++) {
+    if (!stylists[i].active && apptStylist !== stylists[i].machine) continue;
+    styOpts += '<option value="' + stylists[i].machine.replace(/"/g,'&quot;') + '"' + (apptStylist === stylists[i].machine ? ' selected' : '') + '>' + (stylists[i].display || stylists[i].machine) + '</option>';
+  }
+  html += '<div class="modal-edit-row"><label>Stylist</label><select id="editApptStylist">' + styOpts + '</select></div>';
+  html += '</div>';
+  html += '<div class="modal-section" style="display:flex;gap:8px;align-items:center"><button class="btn-save" id="modalSaveBtn">Save</button><button class="btn-cancel" id="modalCancelBtn">Cancel</button><span class="save-status modal-status" id="modalEditStatus"></span></div>';
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalSaveBtn').addEventListener('click', saveApptModal);
+  document.getElementById('modalCancelBtn').addEventListener('click', function(){ renderApptModalReadOnly(); });
+}
+
+function saveApptModal() {
+  if (!_modalData) return;
+  var statusEl = document.getElementById('modalEditStatus');
+  var newDate = document.getElementById('editApptDate').value;
+  var newTime = document.getElementById('editApptTime').value;
+  var newSvc = document.getElementById('editApptSvc').value;
+  var newPrice = document.getElementById('editApptPrice').value;
+  var newDur = document.getElementById('editApptDur').value;
+  var newStylist = document.getElementById('editApptStylist').value;
+  if (!newDate || !newTime) { statusEl.textContent = 'Date and time required'; statusEl.className = 'save-status error modal-status'; return; }
+  statusEl.textContent = 'Saving...'; statusEl.className = 'save-status modal-status';
+  var fields = {service: newSvc, price: newPrice, duration: newDur, date: newDate, time: newTime, stylist: newStylist};
+  fetch('api/data.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action:'update_appointment', clientId: _modalData.clientId, date: _modalData.date, time: _modalData.time, fields: fields})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    if (result.success) {
+      for (var i = 0; i < allAppointments.length; i++) {
+        var a = allAppointments[i];
+        if (String(a.clientId) === String(_modalData.clientId) && a.date === _modalData.date && a.time === _modalData.time) {
+          a.date = newDate; a.time = newTime; a.timeDisplay = to12h(newTime); a._sortTime = newTime;
+          a.service = newSvc; a.price = newPrice; a.duration = newDur; a.stylist = newStylist;
+          if (a._dateObj) a._dateObj = parseDate(newDate);
+          break;
+        }
+      }
+      var c = LOOKUP[String(_modalData.clientId)];
+      if (c && c.appointments) {
+        for (var i = 0; i < c.appointments.length; i++) {
+          if (c.appointments[i].date === _modalData.date && c.appointments[i].time === _modalData.time) {
+            c.appointments[i].date = newDate; c.appointments[i].time = newTime;
+            c.appointments[i].service = newSvc; c.appointments[i].price = newPrice; c.appointments[i].duration = newDur; c.appointments[i].stylist = newStylist;
+            break;
+          }
+        }
+        c.appointments.sort(function(a,b){ return (a.date||'').localeCompare(b.date||'') || (a.time||'').localeCompare(b.time||''); });
+      }
+      showApptModal(_modalData.clientId, newDate, newTime);
+      if (!selectedId) renderAllAppts();
+    } else {
+      statusEl.textContent = 'Error: ' + (result.error || 'Unknown');
+      statusEl.className = 'save-status error modal-status';
+    }
+  })
+  .catch(function(err){
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'save-status error modal-status';
+  });
+}
+
+function closeApptModal() {
+  _modalData = null;
+  document.getElementById('apptModalOverlay').classList.remove('active');
+  document.getElementById('apptModal').classList.remove('open');
+}
+
+function showNewApptModal() {
+  var html = '';
+  html += '<div class="modal-section"><p class="big-name">New Appointment</p></div>';
+  html += '<div class="modal-section">';
+  if (selectedId && LOOKUP[String(selectedId)]) {
+    var cc = LOOKUP[String(selectedId)];
+    html += '<div class="modal-edit-row"><label>Client</label><span style="font-size:14px;font-weight:500">' + cc._name + '</span></div>';
+    html += '<input type="hidden" id="newApptClientId" value="' + selectedId + '">';
+  } else {
+    html += '<div class="modal-edit-row" style="flex-direction:column;align-items:stretch">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    html += '<label style="margin:0">Client</label>';
+    html += '<button id="newClientBtn" type="button" style="padding:3px 10px;border:1px solid #d2d2d7;border-radius:4px;background:#fff;cursor:pointer;font-size:12px">+ New Client</button>';
+    html += '</div>';
+    html += '<div id="newApptClientArea"><input type="text" id="newApptClientSearch" placeholder="Type to search..." style="width:100%;padding:6px 8px;border:1px solid #d2d2d7;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">';
+    html += '<input type="hidden" id="newApptClientId" value="">';
+    html += '<div id="newApptClientResults" style="max-height:150px;overflow-y:auto;border:1px solid #d2d2d7;border-radius:4px;margin-top:4px;display:none"></div></div>';
+    html += '</div>';
+  }
+  html += '<div class="modal-edit-row"><label>Date</label><input type="date" id="newApptDate" value="' + toDateStr(focusDate) + '"></div>';
+  var timeOpts = '';
+  for (var h = 8; h <= 19; h++) {
+    for (var m = 0; m < 60; m += 15) {
+      if (h === 19 && m > 0) continue;
+      var val = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+      timeOpts += '<option value="' + val + '">' + val + '</option>';
+    }
+  }
+  html += '<div class="modal-edit-row"><label>Time</label><select id="newApptTime">' + timeOpts + '</select></div>';
+  var svcOpts = '';
+  for (var i = 0; i < serviceTypes.length; i++) {
+    var st = serviceTypes[i];
+    svcOpts += '<option value="' + st.machine.replace(/"/g,'&quot;') + '">' + (st.display || st.machine) + '</option>';
+  }
+  html += '<div class="modal-edit-row"><label>Service</label><select id="newApptSvc">' + svcOpts + '</select></div>';
+  html += '<div class="modal-edit-row"><label>Price</label><input type="text" id="newApptPrice"></div>';
+  var durOpts = '';
+  for (var d = 15; d <= 120; d += 15) durOpts += '<option value="' + d + '">' + d + ' min</option>';
+  html += '<div class="modal-edit-row"><label>Duration</label><select id="newApptDur">' + durOpts.replace('value="60"', 'value="60" selected') + '</select></div>';
+  var styOpts = '';
+  for (var i = 0; i < stylists.length; i++) {
+    if (!stylists[i].active) continue;
+    styOpts += '<option value="' + stylists[i].machine.replace(/"/g,'&quot;') + '">' + (stylists[i].display || stylists[i].machine) + '</option>';
+  }
+  html += '<div class="modal-edit-row"><label>Stylist</label><select id="newApptStylist">' + styOpts + '</select></div>';
+  html += '</div>';
+  html += '<div class="modal-section" style="display:flex;gap:8px;align-items:center"><button class="btn-save" id="newApptSaveBtn">Save</button><button class="btn-cancel" id="newApptCancelBtn">Cancel</button><span class="save-status modal-status" id="newApptStatus"></span></div>';
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('apptModalOverlay').classList.add('active');
+  document.getElementById('apptModal').classList.add('open');
+  var searchEl = document.getElementById('newApptClientSearch');
+  if (searchEl) {
+    searchEl.addEventListener('input', function() {
+      var q = this.value.toLowerCase().trim();
+      var resultsEl = document.getElementById('newApptClientResults');
+      var hid = document.getElementById('newApptClientId');
+      if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; if (hid) hid.value = ''; return; }
+      if (hid) hid.value = '';
+      var matches = CLIENTS.filter(function(c){ return c._name.toLowerCase().includes(q); });
+      var h = '';
+      for (var i = 0; i < Math.min(matches.length, 20); i++) {
+        h += '<div class="client-search-result" data-id="' + matches[i].id + '" style="padding:6px 8px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0">' + matches[i]._name + '</div>';
+      }
+      resultsEl.innerHTML = h;
+      resultsEl.style.display = matches.length ? '' : 'none';
+      var items = resultsEl.querySelectorAll('.client-search-result');
+      for (var i = 0; i < items.length; i++) {
+        items[i].addEventListener('click', function() {
+          var id = this.dataset.id;
+          document.getElementById('newApptClientSearch').value = this.textContent;
+          document.getElementById('newApptClientId').value = id;
+          document.getElementById('newApptClientResults').style.display = 'none';
+        });
+      }
+    });
+  }
+  document.getElementById('newApptSaveBtn').addEventListener('click', saveNewAppt);
+  document.getElementById('newApptCancelBtn').addEventListener('click', function(){ closeApptModal(); });
+  var newClientBtn = document.getElementById('newClientBtn');
+  if (newClientBtn) newClientBtn.addEventListener('click', showNewClientForm);
+}
+
+function saveNewAppt() {
+  var statusEl = document.getElementById('newApptStatus');
+  var clientId = document.getElementById('newApptClientId').value;
+  var date = document.getElementById('newApptDate').value;
+  var time = document.getElementById('newApptTime').value;
+  if (!clientId || !date || !time) {
+    statusEl.textContent = clientId ? 'Date and time required' : 'Select a client';
+    statusEl.className = 'save-status error modal-status'; return;
+  }
+  var service = document.getElementById('newApptSvc').value;
+  var price = document.getElementById('newApptPrice').value;
+  var duration = document.getElementById('newApptDur').value;
+  var stylist = document.getElementById('newApptStylist').value;
+  statusEl.textContent = 'Saving...'; statusEl.className = 'save-status modal-status';
+  fetch('api/data.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action:'create_appointment', clientId: clientId, date: date, time: time, service: service, price: price, duration: duration, stylist: stylist})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    if (result.success) {
+      var c = LOOKUP[String(clientId)];
+      if (c) {
+        if (!c.appointments) c.appointments = [];
+        c.appointments.push({date: date, time: time, service: service, price: price, duration: duration, stylist: stylist});
+        c.appointments.sort(function(a,b){ return (a.date||'').localeCompare(b.date||'') || (a.time||'').localeCompare(b.time||''); });
+        buildApptList();
+      }
+      closeApptModal();
+      if (selectedId && String(selectedId) === String(clientId)) selectClient(selectedId);
+      else renderAllAppts();
+    } else {
+      statusEl.textContent = 'Error: ' + (result.error || 'Unknown');
+      statusEl.className = 'save-status error modal-status';
+    }
+  })
+  .catch(function(err){
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'save-status error modal-status';
+  });
+}
+
+function showNewClientForm() {
+  var area = document.getElementById('newApptClientArea');
+  if (!area) return;
+  area.innerHTML = '<input type="text" id="newClientFirstName" placeholder="First Name" style="width:100%;padding:6px 8px;border:1px solid #d2d2d7;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:4px">' +
+    '<input type="text" id="newClientLastName" placeholder="Last Name" style="width:100%;padding:6px 8px;border:1px solid #d2d2d7;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:4px">' +
+    '<input type="text" id="newClientPhone" placeholder="Phone" style="width:100%;padding:6px 8px;border:1px solid #d2d2d7;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:4px">' +
+    '<div style="display:flex;gap:6px;align-items:center"><button id="saveNewClientBtn" style="padding:6px 14px;border:none;border-radius:6px;background:#0071e3;color:#fff;cursor:pointer;font-size:13px">Save Client</button><button id="cancelNewClientBtn" style="padding:6px 14px;border:1px solid #d2d2d7;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Cancel</button><span class="save-status modal-status" id="newClientStatus"></span></div>';
+  document.getElementById('saveNewClientBtn').addEventListener('click', saveNewClient);
+  document.getElementById('cancelNewClientBtn').addEventListener('click', function(){
+    var area = document.getElementById('newApptClientArea');
+    if (!area) return;
+    area.innerHTML = '<input type="text" id="newApptClientSearch" placeholder="Type to search..." style="width:100%;padding:6px 8px;border:1px solid #d2d2d7;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">' +
+      '<input type="hidden" id="newApptClientId" value="">' +
+      '<div id="newApptClientResults" style="max-height:150px;overflow-y:auto;border:1px solid #d2d2d7;border-radius:4px;margin-top:4px;display:none"></div>';
+    document.getElementById('newApptClientSearch').addEventListener('input', function() {
+      var q = this.value.toLowerCase().trim();
+      var resultsEl = document.getElementById('newApptClientResults');
+      var hid = document.getElementById('newApptClientId');
+      if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; if (hid) hid.value = ''; return; }
+      if (hid) hid.value = '';
+      var matches = CLIENTS.filter(function(c){ return c._name.toLowerCase().includes(q); });
+      var h = '';
+      for (var i = 0; i < Math.min(matches.length, 20); i++) {
+        h += '<div class="client-search-result" data-id="' + matches[i].id + '" style="padding:6px 8px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0">' + matches[i]._name + '</div>';
+      }
+      resultsEl.innerHTML = h;
+      resultsEl.style.display = matches.length ? '' : 'none';
+      var items = resultsEl.querySelectorAll('.client-search-result');
+      for (var i2 = 0; i2 < items.length; i2++) {
+        items[i2].addEventListener('click', function() {
+          var id = this.dataset.id;
+          document.getElementById('newApptClientSearch').value = this.textContent;
+          document.getElementById('newApptClientId').value = id;
+          document.getElementById('newApptClientResults').style.display = 'none';
+        });
+      }
+    });
+  });
+}
+
+function saveNewClient() {
+  var statusEl = document.getElementById('newClientStatus');
+  var firstName = document.getElementById('newClientFirstName').value.trim();
+  var lastName = document.getElementById('newClientLastName').value.trim();
+  var phone = document.getElementById('newClientPhone').value.trim();
+  if (!firstName && !lastName) { statusEl.textContent = 'Name required'; statusEl.className = 'save-status error modal-status'; return; }
+  statusEl.textContent = 'Saving...'; statusEl.className = 'save-status modal-status';
+  fetch('api/data.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action:'create_client', firstName: firstName, lastName: lastName, phone: phone})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    if (result.success && result.clientId) {
+      var newId = String(result.clientId);
+      var c = {id: result.clientId, firstName: firstName, lastName: lastName, phone1: phone, _name: (firstName + ' ' + lastName).trim() || ('Client #' + result.clientId), appointments: []};
+      CLIENTS.push(c);
+      CLIENTS.sort(function(a,b){ return a._name.toLowerCase().localeCompare(b._name.toLowerCase()); });
+      LOOKUP[newId] = c;
+      filterClients();
+      var area = document.getElementById('newApptClientArea');
+      if (area) {
+        area.innerHTML = '<div style="font-size:14px;font-weight:500">' + c._name + '</div><input type="hidden" id="newApptClientId" value="' + newId + '">';
+      }
+      statusEl.textContent = '';
+    } else {
+      statusEl.textContent = 'Error: ' + (result.error || 'Save failed');
+      statusEl.className = 'save-status error modal-status';
+    }
+  })
+  .catch(function(err){
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.className = 'save-status error modal-status';
+  });
+}
+
+function filterClients() {
+  var q = document.getElementById('searchInput').value.toLowerCase().trim();
+  filtered = q === '' ? CLIENTS.slice() : CLIENTS.filter(function(c){ return c._name.toLowerCase().includes(q); });
+  renderList();
+}
+
+function renderList() {
+  var el = document.getElementById('clientList');
+  document.getElementById('visibleCount').textContent = filtered.length;
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var c = filtered[i];
+    var cnt = c.appointments ? c.appointments.length : 0;
+    var active = String(c.id) === String(selectedId) ? ' active' : '';
+    html += '<div class="client-item' + active + '" data-id="' + c.id + '"><span class="name">' + c._name + '</span>' + (cnt ? ' <span class="appt-count">' + cnt + ' appt' + (cnt > 1 ? 's' : '') + '</span>' : '') + '</div>';
+  }
+  el.innerHTML = html;
+  var items = el.querySelectorAll('.client-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].addEventListener('click', function(){ if (!editing) selectClient(this.dataset.id); });
+  }
+}
+
+document.getElementById('searchInput').addEventListener('input', filterClients);
+document.getElementById('menuBtn').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+document.getElementById('weekViewBtn').addEventListener('click', function(){ if (editing) return; viewMode='week'; document.getElementById('weekViewBtn').classList.add('active'); document.getElementById('dayViewBtn').classList.remove('active'); if (!selectedId) renderAllAppts(); });
+document.getElementById('dayViewBtn').addEventListener('click', function(){ if (editing) return; viewMode='day'; document.getElementById('dayViewBtn').classList.add('active'); document.getElementById('weekViewBtn').classList.remove('active'); if (!selectedId) renderAllAppts(); });
+document.getElementById('prevBtn').addEventListener('click', function(){ if (editing) return; if (viewMode==='day') focusDate.setDate(focusDate.getDate()-1); else focusDate.setDate(focusDate.getDate()-7); renderAllAppts(); });
+document.getElementById('nextBtn').addEventListener('click', function(){ if (editing) return; if (viewMode==='day') focusDate.setDate(focusDate.getDate()+1); else focusDate.setDate(focusDate.getDate()+7); renderAllAppts(); });
+document.getElementById('todayBtn').addEventListener('click', function(){ if (editing) return; focusDate=new Date(); renderAllAppts(); });
+document.getElementById('datePicker').addEventListener('change', function(){
+  if (editing) return;
+  if (this.value) {
+    var parts = this.value.split('-');
+    focusDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    viewMode = 'day';
+    document.getElementById('dayViewBtn').classList.add('active');
+    document.getElementById('weekViewBtn').classList.remove('active');
+    if (!selectedId) renderAllAppts();
+    this.value = '';
+  }
+});
+document.getElementById('backBtn').addEventListener('click', function(){ if (!editing) clearSelection(); });
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+document.getElementById('settingsClose').addEventListener('click', closeSettings);
+document.getElementById('settingsOverlay').addEventListener('click', closeSettings);
+document.getElementById('settingsSaveBtn').addEventListener('click', saveServiceTypes);
+document.getElementById('backupBtn').addEventListener('click', function(){
+  var btn = this, orig = this.textContent;
+  btn.disabled = true; btn.textContent = '⏳ Backing up...';
+  fetch('api/data.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'create_backup'}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.textContent = d.success ? '✅ Done' : '❌ Failed';
+      setTimeout(function(){ btn.disabled = false; btn.textContent = orig; }, 2000);
+    })
+    .catch(function(){
+      btn.textContent = '❌ Error';
+      setTimeout(function(){ btn.disabled = false; btn.textContent = orig; }, 2000);
+    });
+});
+document.getElementById('svcTypeAccordionToggle').addEventListener('click', function(){
+  var c = document.getElementById('svcTypeAccordionContent');
+  var h = c.style.display === 'none';
+  c.style.display = h ? '' : 'none';
+  this.innerHTML = (h ? '\u25BC' : '\u25B6') + ' Service Types';
+});
+document.getElementById('stylistAccordionToggle').addEventListener('click', function(){
+  var c = document.getElementById('stylistAccordionContent');
+  var h = c.style.display === 'none';
+  c.style.display = h ? '' : 'none';
+  this.innerHTML = (h ? '\u25BC' : '\u25B6') + ' Stylists';
+});
+document.getElementById('stylistFilter').addEventListener('change', function(){
+  currentStylist = this.value;
+  renderAllAppts();
+});
+document.getElementById('modalClose').addEventListener('click', closeApptModal);
+document.getElementById('apptModalOverlay').addEventListener('click', closeApptModal);
+document.getElementById('newApptBtn').addEventListener('click', showNewApptModal);
+
+loadData();
+
+function getQueryParam(name) {
+  var m = location.search.match(new RegExp('[?&]' + name + '=([^&]*)'));
+  return m ? decodeURIComponent(m[1].replace(/\+/g,' ')) : null;
+}
+
+if (location.search.indexOf('revisions') !== -1 || location.search.indexOf('history') !== -1) {
+  document.querySelector('.sidebar').style.display = 'none';
+  document.querySelector('.container .main').innerHTML = '<div style="padding:16px;max-width:1000px;margin:0 auto"><h2 style="font-size:18px;margin-bottom:12px">Revision History</h2><div id="revLog"></div></div>';
+  fetch('api/data.php?action=get_revisions')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var revs = data.revisions || [];
+      var h = '';
+      if (!revs.length) { h = '<p style="color:#86868b">No revisions recorded yet.</p>'; }
+      else {
+        h += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+        h += '<thead><tr style="background:#f5f5f7"><th style="text-align:left;padding:8px 10px;border-bottom:1px solid #d2d2d7;font-weight:600">Time</th><th style="text-align:left;padding:8px 10px;border-bottom:1px solid #d2d2d7;font-weight:600">Type</th><th style="text-align:left;padding:8px 10px;border-bottom:1px solid #d2d2d7;font-weight:600">Description</th></tr></thead><tbody>';
+        for (var i = revs.length - 1; i >= 0; i--) {
+          var r = revs[i];
+          var ts = r.timestamp ? r.timestamp.replace('T',' ').replace(/\.\d+/,'').substr(0,19) : '';
+          h += '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;white-space:nowrap;color:#86868b;font-size:12px;font-family:monospace">' + ts + '</td><td style="padding:8px 10px">' + r.type + '</td><td style="padding:8px 10px">' + (r.description||'') + '</td></tr>';
+        }
+        h += '</tbody></table>';
+      }
+      document.getElementById('revLog').innerHTML = h;
+    })
+    .catch(function(err){
+      document.getElementById('revLog').innerHTML = '<p style="color:#e34a2f">Failed to load revisions: ' + err.message + '</p>';
+    });
+}
+</script>
+</body>
+</html>

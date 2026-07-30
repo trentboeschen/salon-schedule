@@ -1,0 +1,10 @@
+{
+  "siteName": "Salon Schedule",
+  "stylists": [
+    {
+      "machine": "stylist1",
+      "display": "Stylist",
+      "active": true
+    }
+  ]
+}
