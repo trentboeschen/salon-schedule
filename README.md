@@ -4,7 +4,7 @@ A web-based appointment scheduling system for small salons. View, add, edit, mov
 
 ## Quick Start
 
-Open `http://localhost/` (or your server's address) in a browser. The main screen shows the appointment timeline. Use the **gear icon** (top-right) to open settings and set your salon name, service types, and stylists.
+Copy all files to a PHP-enabled web server. Open the URL for the server in a browser. The main screen shows the appointment timeline. Use the **gear icon** (top-right) to open settings and set your salon name, service types, and stylists.
 
 ## Data Files
 
@@ -54,19 +54,6 @@ Every change (create/edit/move/delete appointment, create/edit client) is record
 - **Data format**: JSON files on disk (no database required)
 - **PHP required**: The viewer needs PHP to save changes. Without it, the page loads in read-only mode.
 
-## Deploy Pipeline
-
-```bash
-python3 scripts/clean_clients.py csv/CLIENTS.TXT \
-  --json-fallback clients.json -o csv/CLIENTS_CLEAN.TXT && \
-python3 scripts/combine_csv_export.py csv/CLIENTS_CLEAN.TXT csv/PPAPP003.TXT \
-  --no-empty -o data.json && \
-python3 scripts/build_csv_viewer.py data.json \
-  --deploy /var/www/html
-```
-
-The build script (`scripts/build_csv_viewer.py`) generates `index.html` and `api/data.php` from templates. Run it whenever `data.json` is regenerated to keep the viewer in sync.
-
 ## File Permissions
 
 The web server needs write access to the `data/` folder and its files. If saves fail, check that Apache's user (`www-data`) can write to:
@@ -79,4 +66,3 @@ backups/      (chmod 777)
 ## Requirements
 
 - Web server with PHP (any version that supports `json_encode`/`json_decode`)
-- Python 3.6+ (only needed for the deploy pipeline, not for running the app)
