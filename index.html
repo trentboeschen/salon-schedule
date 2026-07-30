@@ -272,6 +272,7 @@ header .gear-btn { margin-left: auto; }
         <h3 class="accordion-toggle" id="svcTypeAccordionToggle">&#9654; Service Types</h3>
         <div class="accordion-content" id="svcTypeAccordionContent" style="display:none">
           <div id="serviceTypeList"></div>
+          <div style="margin-top:8px"><button class="btn-save" id="addSvcTypeBtn" style="font-size:12px;padding:4px 10px">+ New Service Type</button></div>
           <span class="save-status" id="svcTypeStatus"></span>
         </div>
       </div>
@@ -381,11 +382,16 @@ function renderServiceTypes() {
   var html = '';
   for (var i = 0; i < serviceTypes.length; i++) {
     var st = serviceTypes[i];
-    html += '<div class="svc-type-row"><span class="svc-machine" title="' + st.machine + '">' + st.machine + '</span><div class="svc-display"><input type="text" id="st_disp_' + i + '" value="' + (st.display||'').replace(/"/g,'&quot;') + '" placeholder="Display name"></div><div class="svc-color"><input type="color" id="st_col_' + i + '" value="' + (st.color||'#cccccc') + '"></div><div class="svc-dur"><select id="st_dur_' + i + '">' + durOpts.replace('value="' + (st.defaultDuration||60) + '"', 'value="' + (st.defaultDuration||60) + '" selected') + '</select></div></div>';
+    var isNew = st.machine.indexOf('new-type-') === 0;
+    var machineHtml = isNew
+      ? '<input type="text" id="st_machine_' + i + '" value="' + st.machine.replace(/"/g,'&quot;') + '" placeholder="machine name" style="width:90px;padding:4px 6px;border:1px solid #d2d2d7;border-radius:4px;font-size:12px;font-family:monospace">'
+      : '<span class="svc-machine" title="' + st.machine + '">' + st.machine + '</span>';
+    html += '<div class="svc-type-row">' + machineHtml + '<div class="svc-display"><input type="text" id="st_disp_' + i + '" value="' + (st.display||'').replace(/"/g,'&quot;') + '" placeholder="Display name"></div><div class="svc-color"><input type="color" id="st_col_' + i + '" value="' + (st.color||'#cccccc') + '"></div><div class="svc-dur"><select id="st_dur_' + i + '">' + durOpts.replace('value="' + (st.defaultDuration||60) + '"', 'value="' + (st.defaultDuration||60) + '" selected') + '</select></div></div>';
   }
   document.getElementById('serviceTypeList').innerHTML = html;
   document.getElementById('siteNameInput').addEventListener('input', enableSettingsSave);
   for (var i = 0; i < serviceTypes.length; i++) {
+    if (document.getElementById('st_machine_' + i)) document.getElementById('st_machine_' + i).addEventListener('input', enableSettingsSave);
     document.getElementById('st_disp_' + i).addEventListener('input', enableSettingsSave);
     document.getElementById('st_col_' + i).addEventListener('input', enableSettingsSave);
     document.getElementById('st_dur_' + i).addEventListener('change', enableSettingsSave);
@@ -443,7 +449,9 @@ function saveServiceTypes() {
     var dispEl = document.getElementById('st_disp_' + i);
     var colEl = document.getElementById('st_col_' + i);
     var durEl = document.getElementById('st_dur_' + i);
-    arr.push({machine: serviceTypes[i].machine, display: dispEl ? dispEl.value : serviceTypes[i].display, color: colEl ? colEl.value : serviceTypes[i].color, defaultDuration: durEl ? parseInt(durEl.value,10) : (serviceTypes[i].defaultDuration||60)});
+    var machineEl = document.getElementById('st_machine_' + i);
+    var machine = machineEl ? machineEl.value : serviceTypes[i].machine;
+    arr.push({machine: machine, display: dispEl ? dispEl.value : serviceTypes[i].display, color: colEl ? colEl.value : serviceTypes[i].color, defaultDuration: durEl ? parseInt(durEl.value,10) : (serviceTypes[i].defaultDuration||60)});
   }
   var snEl = document.getElementById('siteNameInput');
   var newSiteName = snEl ? snEl.value : siteName;
@@ -1442,6 +1450,18 @@ document.getElementById('svcTypeAccordionToggle').addEventListener('click', func
   var h = c.style.display === 'none';
   c.style.display = h ? '' : 'none';
   this.innerHTML = (h ? '\u25BC' : '\u25B6') + ' Service Types';
+});
+document.getElementById('addSvcTypeBtn').addEventListener('click', function(){
+  var suffix = 1;
+  while (serviceTypes.some(function(s){ return s.machine === 'new-type-' + suffix; })) suffix++;
+  var machine = 'new-type-' + suffix;
+  serviceTypes.push({machine: machine, display: '', color: '#cccccc', defaultDuration: 60});
+  renderServiceTypes();
+  enableSettingsSave();
+  var content = document.getElementById('svcTypeAccordionContent');
+  content.style.display = '';
+  document.getElementById('svcTypeAccordionToggle').innerHTML = '\u25BC Service Types';
+  setTimeout(function(){ var el = document.getElementById('st_disp_' + (serviceTypes.length - 1)); if (el) el.focus(); }, 50);
 });
 document.getElementById('stylistAccordionToggle').addEventListener('click', function(){
   var c = document.getElementById('stylistAccordionContent');
