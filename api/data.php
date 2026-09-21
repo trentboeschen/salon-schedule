@@ -75,10 +75,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (isset($settings['stylists']) && is_array($settings['stylists'])) {
                 $data['stylists'] = $settings['stylists'];
             }
+            if (isset($settings['products']) && is_array($settings['products'])) {
+                $data['products'] = $settings['products'];
+            }
+            if (isset($settings['taxRate'])) {
+                $data['taxRate'] = (float)$settings['taxRate'];
+            }
+            if (isset($settings['serviceTypes']) && is_array($settings['serviceTypes'])) {
+                $data['serviceTypes'] = $settings['serviceTypes'];
+            }
         }
     }
     if (!isset($data['stylists']) || !is_array($data['stylists'])) {
         $data['stylists'] = [['machine' => 'stylist1', 'display' => 'Stylist 1', 'active' => true]];
+    }
+    if (!isset($data['products']) || !is_array($data['products'])) {
+        $data['products'] = [['machine' => 'product1', 'display' => 'Product 1', 'active' => true]];
+    }
+    if (!isset($data['taxRate'])) {
+        $data['taxRate'] = 0;
     }
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
@@ -104,6 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     $found = true; break;
                 }
+                if (isset($settings['serviceTypes']) && is_array($settings['serviceTypes'])) {
+                    $data['serviceTypes'] = $settings['serviceTypes'];
+                }
             }
             if (!$found) { http_response_code(404); echo json_encode(['error' => 'Client not found']); exit; }
             file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -115,13 +133,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'update_service_types':
             $types = $input['serviceTypes'] ?? [];
             if (!is_array($types)) { http_response_code(400); echo json_encode(['error' => 'Invalid serviceTypes']); exit; }
-            $data['serviceTypes'] = $types;
+            unset($data['serviceTypes']);
             file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             $settings = [];
             if (file_exists($settingsFile)) {
                 $settings = json_decode(file_get_contents($settingsFile), true);
                 if (!is_array($settings)) $settings = [];
             }
+            $settings['serviceTypes'] = $types;
             if (isset($input['siteName'])) {
                 $settings['siteName'] = $input['siteName'];
             }
@@ -129,6 +148,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $settings['stylists'] = $input['stylists'];
             } elseif (!isset($settings['stylists'])) {
                 $settings['stylists'] = [['machine' => 'stylist1', 'display' => 'Stylist 1', 'active' => true]];
+            }
+            if (isset($input['products']) && is_array($input['products'])) {
+                $settings['products'] = $input['products'];
+            } elseif (!isset($settings['products'])) {
+                $settings['products'] = [['machine' => 'product1', 'display' => 'Product 1', 'active' => true]];
+            }
+            if (isset($input['taxRate'])) {
+                $settings['taxRate'] = (float)$input['taxRate'];
+            } elseif (!isset($settings['taxRate'])) {
+                $settings['taxRate'] = 0;
             }
             file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             maybeBackup(); echo json_encode(['success' => true]);

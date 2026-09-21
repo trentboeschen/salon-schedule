@@ -1,0 +1,203 @@
+{
+    "siteName": "Salon Elle DEV",
+    "stylists": [
+        {
+            "machine": "stylist1",
+            "display": "Elle",
+            "active": true
+        },
+        {
+            "machine": "stylist2",
+            "display": "Kiki",
+            "active": true
+        }
+    ],
+    "products": [
+        {
+            "machine": "product1",
+            "display": "Shampoo",
+            "active": true
+        },
+        {
+            "machine": "product2",
+            "display": "Conditioner",
+            "active": true
+        },
+        {
+            "machine": "product3",
+            "display": "Styling",
+            "active": true
+        }
+    ],
+    "taxRate": 9.25,
+    "serviceTypes": [
+        {
+            "machine": "anti-curl-long",
+            "display": "Anti Curl Long",
+            "color": "#e8a0bf",
+            "defaultDuration": 60,
+            "segments": [
+                {
+                    "d": 30,
+                    "w": "work"
+                },
+                {
+                    "d": 45,
+                    "w": "wait"
+                },
+                {
+                    "d": 15,
+                    "w": "work"
+                }
+            ]
+        },
+        {
+            "machine": "anti-curl-short",
+            "display": "Anti Curl Short",
+            "color": "#a0c4e8",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "bang trim",
+            "display": "Bang Trim",
+            "color": "#b8e0a0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "blowout-long",
+            "display": "Blowout Long",
+            "color": "#f0d080",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "blowout-short",
+            "display": "Blowout Short",
+            "color": "#d4a0e8",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "celophen-long",
+            "display": "Celophen Long",
+            "color": "#80d0d0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "celophen-short",
+            "display": "Celophen Short",
+            "color": "#f0a080",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "color man",
+            "display": "Color Man",
+            "color": "#a0d080",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "color+blowout",
+            "display": "Color+Blowout",
+            "color": "#e0b0a0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "color-long",
+            "display": "Color Long",
+            "color": "#c0c0e8",
+            "defaultDuration": 60,
+            "segments": [
+                {
+                    "d": 30,
+                    "w": "work"
+                },
+                {
+                    "d": 15,
+                    "w": "wait"
+                },
+                {
+                    "d": 15,
+                    "w": "work"
+                }
+            ]
+        },
+        {
+            "machine": "color-short",
+            "display": "Color Short",
+            "color": "#80c080",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "consultation",
+            "display": "Consultation",
+            "color": "#e8c080",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "fix up",
+            "display": "Fix Up",
+            "color": "#b0d0f0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "full-hilights-long",
+            "display": "Full Hilights Long",
+            "color": "#d0b0e0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "haircut blowout",
+            "display": "Haircut Blowout",
+            "color": "#c0e0c0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "haircut men",
+            "display": "Haircut Men",
+            "color": "#f0c0c0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "haircut women",
+            "display": "Haircut Women",
+            "color": "#a0d0c0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "multi-color-long",
+            "display": "Multi Color Long",
+            "color": "#d0d080",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "multi-color-short",
+            "display": "Multi Color Short",
+            "color": "#e8b0b0",
+            "defaultDuration": 60
+        },
+        {
+            "machine": "p-h.l 2 colors",
+            "display": "P H.L 2 Colors",
+            "color": "#b0b0e8",
+            "defaultDuration": 60,
+            "segments": [
+                {
+                    "d": 30,
+                    "w": "work"
+                },
+                {
+                    "d": 15,
+                    "w": "wait"
+                },
+                {
+                    "d": 15,
+                    "w": "work"
+                }
+            ]
+        },
+        {
+            "machine": "p-hilights",
+            "display": "P Hilights",
+            "color": "#c0e8c0",
+            "defaultDuration": 60
+        }
+    ]
+}

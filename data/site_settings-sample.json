@@ -1,0 +1,32 @@
+{
+  "siteName": "Salon Schedule",
+  "taxRate": 0,
+  "serviceTypes": [
+    {
+      "machine": "haircut",
+      "display": "Haircut",
+      "color": "#4a90e2",
+      "defaultDuration": 60,
+      "segments": [
+        {
+          "d": 60,
+          "w": "work"
+        }
+      ]
+    }
+  ],
+  "stylists": [
+    {
+      "machine": "stylist1",
+      "display": "Stylist 1",
+      "active": true
+    }
+  ],
+  "products": [
+    {
+      "machine": "product1",
+      "display": "Product 1",
+      "active": true
+    }
+  ]
+}

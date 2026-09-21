@@ -4,17 +4,35 @@ A web-based appointment scheduling system for small salons. View, add, edit, mov
 
 ## Quick Start
 
-Copy all files to a PHP-enabled web server. Open the URL for the server in a browser. The main screen shows the appointment timeline. Use the **gear icon** (top-right) to open settings and set your salon name, service types, and stylists.
+Open `http://localhost/` (or your server's address) in a browser. The main screen shows the appointment timeline. Use the **gear icon** (top-right) to open settings and set your salon name, service types, and stylists.
 
-## Data Files
+## Data Files & Security
 
-All data is stored under the `data/` folder as plain JSON files — easy to back up or edit manually:
+All data is stored under the `data/` folder as plain JSON files[cite: 2]:
 
 | File | What it stores |
 |------|---------------|
-| `data/data.json` | All clients and appointments |
-| `data/site_settings.json` | Salon name, service types, stylist list |
-| `data/revisions.json` | Change history (auto-trimmed to 30 days) |
+| `data/data.json` | All clients and appointments[cite: 2] |
+| `data/site_settings.json` | Salon name, service types, stylist list, products, tax rate[cite: 2, 4, 7] |
+| `data/revisions.json` | Change history (auto-trimmed to 30 days)[cite: 2] |
+
+### Directory Permissions & Hardening
+
+The web server process (`www-data` on Apache/Ubuntu) requires exclusive read/write access to the data directories[cite: 2]. For security, files should **not** be set to world-writable (`777`)[cite: 2].
+
+**Set ownership and directory permissions:**
+   Restrict file access so only the web server user can read and modify the JSON files:
+   ```bash
+   sudo chown -R www-data:www-data data/ backups/
+   sudo chmod -R 750 data/ backups/
+
+**Block direct HTTP downloads (.htaccess):**
+   To prevent public browsers from downloading raw JSON files directly, place a root-level .htaccess file in your web directory:
+   ```bash
+   RewriteEngine On
+   # Block direct web access to data and backup stores
+   RewriteRule ^(data|backups)(/.*)?$ - [F,L]
+
 
 ## Backups
 
@@ -54,6 +72,33 @@ Every change (create/edit/move/delete appointment, create/edit client) is record
 - **Data format**: JSON files on disk (no database required)
 - **PHP required**: The viewer needs PHP to save changes. Without it, the page loads in read-only mode.
 
+## App Files
+
+The app is plain static files — no build step required. Just serve the folder:
+
+```
+index.html         (page shell)
+css/app.css        (styles)
+js/app.js          (app logic)
+api/data.php       (data read/write API)
+data/*.json        (data files)
+```
+
+To update the app, edit these files directly and refresh the browser.
+
+## Data Cleanup / Export Tools
+
+The Python helpers prepare old CSV exports into the `data.json` payload the app reads:
+
+```bash
+python3 scripts/clean_clients.py csv/CLIENTS.TXT \
+  --json-fallback clients.json -o csv/CLIENTS_CLEAN.TXT && \
+python3 scripts/combine_csv_export.py csv/CLIENTS_CLEAN.TXT csv/PPAPP003.TXT \
+  --no-empty -o data.json
+```
+
+Run them whenever the CSV exports are refreshed to regenerate `data.json`. The retired generator script is kept under `scripts/archive/`.
+
 ## File Permissions
 
 The web server needs write access to the `data/` folder and its files. If saves fail, check that Apache's user (`www-data`) can write to:
@@ -66,3 +111,4 @@ backups/      (chmod 777)
 ## Requirements
 
 - Web server with PHP (any version that supports `json_encode`/`json_decode`)
+- Python 3.6+ (only needed for the deploy pipeline, not for running the app)

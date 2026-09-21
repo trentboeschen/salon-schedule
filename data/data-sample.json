@@ -1,0 +1,26 @@
+{
+  "source": "sample data",
+  "totalClients": 1,
+  "totalAppointments": 1,
+  "unmatchedAppointmentNames": [],
+  "ambiguousNameClients": [],
+  "serviceTypes": null,
+  "clients": [
+    {
+      "id": 1,
+      "firstName": "Jane",
+      "lastName": "Client",
+      "phone1": "",
+      "appointments": [
+        {
+          "date": "2026-07-30",
+          "time": "10:00",
+          "duration": "60",
+          "service": "",
+          "price": "",
+          "stylist": "stylist1"
+        }
+      ]
+    }
+  ]
+}

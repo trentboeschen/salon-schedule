@@ -1,0 +1,15 @@
+{
+    "siteName": "Salon Elle Scheduler",
+    "stylists": [
+        {
+            "machine": "stylist1",
+            "display": "Elle",
+            "active": true
+        },
+        {
+            "machine": "stylist2",
+            "display": "Kiki",
+            "active": true
+        }
+    ]
+}
