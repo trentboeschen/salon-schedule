@@ -25,6 +25,7 @@ The web server process (`www-data` on Apache/Ubuntu) requires exclusive read/wri
    ```bash
    sudo chown -R www-data:www-data data/ backups/
    sudo chmod -R 750 data/ backups/
+```
 
 **Block direct HTTP downloads (.htaccess):**
    To prevent public browsers from downloading raw JSON files directly, place a root-level .htaccess file in your web directory:
@@ -32,7 +33,7 @@ The web server process (`www-data` on Apache/Ubuntu) requires exclusive read/wri
    RewriteEngine On
    # Block direct web access to data and backup stores
    RewriteRule ^(data|backups)(/.*)?$ - [F,L]
-
+```
 
 ## Backups
 
